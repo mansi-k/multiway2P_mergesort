@@ -1,0 +1,3 @@
+/home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/cmake-build-debug/CMakeFiles/multiway2P_mergesort.dir

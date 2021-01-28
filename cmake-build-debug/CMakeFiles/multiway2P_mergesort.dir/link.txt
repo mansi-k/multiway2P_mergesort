@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/multiway2P_mergesort.dir/main.cpp.o  -o multiway2P_mergesort 
