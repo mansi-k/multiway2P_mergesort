@@ -16,11 +16,9 @@ class AscRecCompare {
 public:
     int operator()(T const &r1, T const &r2) {
         for(int i=0;i<COL_ORDER.size();i++) {
-            if(r1[i] == r2[i]) {
-                cout << r1[i] << endl;
+            if(r1[i] == r2[i])
                 continue;
-            }
-            return (r2[i].compare(r1[i]));
+            return (r1[i].compare(r2[i]));
         }
     }
 };
@@ -32,7 +30,7 @@ public:
         for(int i=0;i<COL_ORDER.size();i++) {
             if(r1[i] == r2[i])
                 continue;
-            return (-1*r2[i].compare(r1[i]));
+            return (-1*r1[i].compare(r2[i]));
         }
     }
 };
@@ -106,7 +104,6 @@ public:
     void sortFile() {
         cout << "Running Phase 1" << endl;
         phaseOneSort();
-        exit(0);
         if(!tmpFilenamesVec.empty()) {
             cout << "Running Phase 2" << endl;
             phaseTwoSort();
@@ -135,7 +132,6 @@ public:
                 else
                     sort(recordsVec.begin(),recordsVec.end(),DescRecCompare<vector<string>>());
                 writeTempFile(sublist_num);
-//                exit(0);
                 cur_line_count = 0;
                 sublist_num++;
                 recordsVec.clear();
@@ -152,6 +148,7 @@ public:
             cur_line_count = 0;
             sublist_num++;
             recordsVec.clear();
+//            all_recs_count++;
         }
         cout << "Records sorted : " << all_recs_count << endl;
     }
@@ -167,12 +164,17 @@ public:
         cout << "is open " << tmp_filename << " " << recordsVec.size() << endl;
         for(int i=0; i<recordsVec.size(); i++) {
             string recline = vecToStr(recordsVec[i], false);
-//            cout << recline << endl;
+            cout << recline << endl;
+            try {
                 if (i == recordsVec.size() - 1)
                     tmpfile << recline;
                 else
                     tmpfile << recline << "\n";
-//            tmpfile << "manu";
+            }
+            catch(exception) {
+                cout << "*************************exptn" << endl;
+            }
+            tmpfile << "manu";
         }
         tmpfile.close();
 //        delete tmpfile;
