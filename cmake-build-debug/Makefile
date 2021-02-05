@@ -143,6 +143,33 @@ multiway2P_mergesort/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/build
 .PHONY : multiway2P_mergesort/fast
 
+bythread.o: bythread.cpp.o
+
+.PHONY : bythread.o
+
+# target to build an object file
+bythread.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/bythread.cpp.o
+.PHONY : bythread.cpp.o
+
+bythread.i: bythread.cpp.i
+
+.PHONY : bythread.i
+
+# target to preprocess a source file
+bythread.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/bythread.cpp.i
+.PHONY : bythread.cpp.i
+
+bythread.s: bythread.cpp.s
+
+.PHONY : bythread.s
+
+# target to generate assembly for a file
+bythread.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/bythread.cpp.s
+.PHONY : bythread.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -170,6 +197,33 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+trythread.o: trythread.cpp.o
+
+.PHONY : trythread.o
+
+# target to build an object file
+trythread.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/trythread.cpp.o
+.PHONY : trythread.cpp.o
+
+trythread.i: trythread.cpp.i
+
+.PHONY : trythread.i
+
+# target to preprocess a source file
+trythread.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/trythread.cpp.i
+.PHONY : trythread.cpp.i
+
+trythread.s: trythread.cpp.s
+
+.PHONY : trythread.s
+
+# target to generate assembly for a file
+trythread.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/trythread.cpp.s
+.PHONY : trythread.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -179,9 +233,15 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... multiway2P_mergesort"
+	@echo "... bythread.o"
+	@echo "... bythread.i"
+	@echo "... bythread.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... trythread.o"
+	@echo "... trythread.i"
+	@echo "... trythread.s"
 .PHONY : help
 
 

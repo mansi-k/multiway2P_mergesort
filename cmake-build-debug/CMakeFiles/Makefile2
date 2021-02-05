@@ -94,12 +94,12 @@ clean: CMakeFiles/multiway2P_mergesort.dir/clean
 CMakeFiles/multiway2P_mergesort.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/multiway2P_mergesort.dir/build.make CMakeFiles/multiway2P_mergesort.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/cmake-build-debug/CMakeFiles --progress-num=1,2 "Built target multiway2P_mergesort"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/cmake-build-debug/CMakeFiles --progress-num=1,2,3,4 "Built target multiway2P_mergesort"
 .PHONY : CMakeFiles/multiway2P_mergesort.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/multiway2P_mergesort.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/cmake-build-debug/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/cmake-build-debug/CMakeFiles 4
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/multiway2P_mergesort.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/cmake-build-debug/CMakeFiles 0
 .PHONY : CMakeFiles/multiway2P_mergesort.dir/rule

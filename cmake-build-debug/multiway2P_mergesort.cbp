@@ -84,7 +84,13 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/bythread.cpp">
+			<Option target="multiway2P_mergesort"/>
+		</Unit>
 		<Unit filename="/home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/main.cpp">
+			<Option target="multiway2P_mergesort"/>
+		</Unit>
+		<Unit filename="/home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/trythread.cpp">
 			<Option target="multiway2P_mergesort"/>
 		</Unit>
 		<Unit filename="/home/mansi/IIITH/DS/assignment2/multiway2P_mergesort/CMakeLists.txt">

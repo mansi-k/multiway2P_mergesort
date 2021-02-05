@@ -1,1 +1,1 @@
-/usr/bin/c++  -g   CMakeFiles/multiway2P_mergesort.dir/main.cpp.o  -o multiway2P_mergesort 
+/usr/bin/c++  -g   CMakeFiles/multiway2P_mergesort.dir/main.cpp.o CMakeFiles/multiway2P_mergesort.dir/bythread.cpp.o CMakeFiles/multiway2P_mergesort.dir/trythread.cpp.o  -o multiway2P_mergesort 

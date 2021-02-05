@@ -3,4 +3,4 @@ project(multiway2P_mergesort)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(multiway2P_mergesort main.cpp)
+add_executable(multiway2P_mergesort main.cpp bythread.cpp trythread.cpp)
