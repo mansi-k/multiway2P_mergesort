@@ -1,13 +1,12 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <sys/stat.h>
 #include <vector>
-#include <cstdio>
 #include <algorithm>
 #include <bits/stdc++.h>
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 
 vector<int> COL_ORDER;
 
@@ -93,9 +92,9 @@ public:
     TwoPhaseMergeSort(string inFile, string outFile, int mem_size, string ord, vector<string> &sort_cols_vec) {
         inputFile = inFile;
         outputFile = outFile;
-//        maxMemSize = (long int) mem_size*1000000*0.8;
-        maxMemSize = (long int) mem_size*0.8;
-        cout << "Memory size taken : " << maxMemSize << endl;
+        maxMemSize = (long int) mem_size*1000000;
+//        maxMemSize = (long int) mem_size*0.8;
+        cout << "Memory size taken (in bytes) : " << maxMemSize << endl;
         sortColsVec = sort_cols_vec;
         order = "";
         for(int i=0;i<ord.length();i++)
@@ -125,7 +124,7 @@ public:
             recSize += colsize;
         }
         metafile.close();
-        cout << "Record size (without delimiter) : " << recSize << endl;
+        cout << "Record size in bytes (without delimiter) : " << recSize << endl;
         for(auto it=sortColsVec.begin();it!=sortColsVec.end();it++) {
             bool flag = false;
             for(int j=0;j<metaVec.size();j++) {
@@ -142,10 +141,10 @@ public:
             }
         }
         COL_ORDER = sortColIndexVec;
-        cout << "colorder";
-        for(int a=0;a<COL_ORDER.size();a++)
-            cout << COL_ORDER[a] << " ";
-        cout << endl;
+//        cout << "colorder";
+//        for(int a=0;a<COL_ORDER.size();a++)
+//            cout << COL_ORDER[a] << " ";
+//        cout << endl;
     }
 
     void sortFile() {
@@ -162,9 +161,9 @@ public:
         struct stat filestatus;
         stat(inputFile.c_str(), &filestatus);
         long int filesize = filestatus.st_size;
-        cout << "Filesize : " << filesize << endl;
+//        cout << "Filesize : " << filesize << endl;
         long int recs_toread = (long int) maxMemSize/recSize;
-        cout << "Number of sub-files (splits) : " << (long int)filesize/(recs_toread*recSize) << endl;
+//        cout << "Number of sub-files (splits) : " << (long int)filesize/(recs_toread*recSize) << endl;
         cout << "Records to read per sub-file : " << recs_toread << endl;
         ifstream datafile(inputFile);
         string line;
@@ -199,7 +198,7 @@ public:
             sublist_num++;
             recordsVec.clear();
         }
-        cout << "Records sorted : " << all_recs_count << endl;
+//        cout << "Records sorted : " << all_recs_count << endl;
     }
 
     void writeTempFile(int sublist_num) {
@@ -210,7 +209,7 @@ public:
         if(!tmpfile.is_open()) {
             cout << "not open " << tmp_filename << endl;
         }
-        cout << "is open " << tmp_filename << " " << recordsVec.size() << endl;
+//        cout << "is open " << tmp_filename << " " << recordsVec.size() << endl;
         for(int i=0; i<recordsVec.size(); i++) {
             string recline = vecToStr(recordsVec[i], false);
 //            cout << recline << endl;
@@ -228,9 +227,9 @@ public:
         openTempFiles();
         ofstream *outFile = new ofstream(outputFile.c_str(), ios::out | ios::app);
         int sublist_num = tmpFilenamesVec.size();
-        cout << "no of files " << sublist_num << endl;
+        cout << "No of sub-files : " << sublist_num << endl;
         int block_size = (int)maxMemSize/(sublist_num*recSize);
-        cout << "block size " << block_size << endl;
+        cout << "Block size (no of records) : " << block_size << endl;
         string line;
         bool is_completed[sublist_num];
         completed_arr = is_completed;
@@ -249,47 +248,35 @@ public:
             int last_col_idx = recordsVec[0].size()-1;
             vector<string> top_record = PQ.top();
             int top_block_num = stoi(top_record[last_col_idx]);
-            cout << "TOP " << top_block_num << " " << top_record[2] << endl;
+//            cout << "TOP " << top_block_num << " " << top_record[2] << endl;
             block_access_arr[top_block_num]++;
-            cout << top_block_num << "access" << block_access_arr[top_block_num] << endl;
+//            cout << top_block_num << "access" << block_access_arr[top_block_num] << endl;
             if(PQ.size()==1) {
                 *outFile << vecToStr(top_record, true) << "\n";
             }
             else {
                 *outFile << vecToStr(top_record, true) << "\n";
             }
-            cout << "before pop " << PQ.size();
+//            cout << "before pop " << PQ.size();
             PQ.pop();
-            cout << " after pop " << PQ.size() << endl;
+//            cout << " after pop " << PQ.size() << endl;
             if(block_access_arr[top_block_num] >= block_size && !completed_arr[top_block_num]) {
 //                PQ.push(readDataBlock(top_block_num,block_size));
                 for(vector<string> const rvec : readDataBlock(top_block_num,block_size))
                     PQ.push(rvec);
                 block_access_arr[top_block_num] = 0;
-                cout << "here" << PQ.size() << endl;
+//                cout << "here" << PQ.size() << endl;
             }
         }
-        closeTempFiles();
         outFile->close();
     }
 
     vector<vector<string>> readDataBlock(int filenum, int block_size) {
         string line, word;
         vector<vector<string>> block_recs;
-//        char cline[lineSize+1];
-//        bool is_completed = false;
         for(int b=0;b<block_size;b++) {
-            cout << "before getline " << filenum << endl;
+//            cout << "before getline " << filenum << endl;
             if(openTempFilesVec[filenum]->peek() && getline(*openTempFilesVec[filenum],line)) {
-//            if(fgets(cline,lineSize+1,openTempFilesVec[filenum])) {
-//            if(*openTempFilesVec[filenum] >> word) {
-//                line = string(cline);
-//                line += word+"  ";
-                cout << "read " << line << endl;
-//                for(int w=1;w<metaVec.size();w++){
-//                    *openTempFilesVec[filenum] >> word;
-//                    line += "  "+word;
-//                }
                 vector<string> record = recToVec(line);
                 record.push_back(to_string(filenum));
                 recordsVec.push_back(record);
@@ -301,11 +288,10 @@ public:
                 }
             }
             else {
-//                completed_arr[filenum] = true;
                 cout << "error reading red" << endl;
                 break;
             }
-            cout << "read " << filenum << endl;
+//            cout << "read " << filenum << endl;
         }
         return block_recs;
     }
@@ -334,12 +320,7 @@ public:
 
     void openTempFiles() {
         for (int i=0;i<tmpFilenamesVec.size();i++) {
-//            ifstream *tmpfile = new ifstream(tmpFilenamesVec[i].c_str(), ios::in);;
-//            tmpfile.open(tmpFilenamesVec[i].c_str(), ios::in);
             openTempFilesVec.push_back(new ifstream(tmpFilenamesVec[i].c_str(), ios::in));
-//            FILE *tmpfile = fopen(tmpFilenamesVec[i].c_str(), "r");
-//            openTempFilesVec.push_back(tmpfile);
-//            tmpfile.open(tmpFilenamesVec[i].c_str(), ios::in);
 
         }
     }
@@ -347,9 +328,7 @@ public:
     void closeTempFiles() {
         for (int i=0;i<openTempFilesVec.size();i++) {
             openTempFilesVec[i]->close();
-//            fclose(openTempFilesVec[i]);
-//            remove(tmpFilenamesVec[i].c_str());
-//            delete openTempFilesVec[i];
+            remove(tmpFilenamesVec[i].c_str());
         }
     }
 
@@ -368,6 +347,11 @@ int main(int argc, char ** argv) {
 //    cout << endl;
     TwoPhaseMergeSort *tpms = new TwoPhaseMergeSort(argv[1],argv[2],stoi(argv[3]),argv[4],sort_cols_vec);
     cout << "Started Execution" << endl;
+    auto ex_start = high_resolution_clock::now();
     tpms->sortFile();
+    auto ex_stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(ex_stop - ex_start);
+    cout << "Time taken for sorting : " << ((double)duration.count()/1000) << " seconds" << endl;
+    tpms->closeTempFiles();
     return 0;
 }
