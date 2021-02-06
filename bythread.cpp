@@ -136,9 +136,13 @@ void TwoPhaseMergeSort(string inFile, string outFile, int mem_size, int nthreads
     inputFile = inFile;
     outputFile = outFile;
 //        maxMemSize = (long int) mem_size*1000000*0.8;
-    maxMemSize = (long int) mem_size*0.8;
+    maxMemSize = (long int) mem_size;
     cout << "Memory size taken : " << maxMemSize << endl;
     num_threads = nthreads;
+    if(num_threads > THREADLIMIT) {
+        cout << "Maximum no. of threads allowed is " << THREADLIMIT << endl;
+        exit(0);
+    }
     sortColsVec = sort_cols_vec;
     order = "";
     for(int i=0;i<ord.length();i++)
@@ -170,10 +174,13 @@ void* readInputFile(void *args) {
     ifstream datafile(inputFile);
     datafile.seekg(start_line*lineSize, ios::beg);
     cout << "Seeking to " << start_line << " in bytes :" << start_line*lineSize << endl;
+//    int x;
+//    cin >> x;
     long int cur_lineno = start_line;
     long int end_lineno = start_line+lines_per_thread;
+    long int block_lines = lines_fit*(block_num+1);
     string line="";
-    while(cur_lineno<total_lines && cur_lineno<lines_fit+block_num && cur_lineno<end_lineno && getline(datafile, line)) {
+    while(cur_lineno<total_lines && cur_lineno<block_lines && cur_lineno<end_lineno && getline(datafile, line)) {
         cout << line << endl;
         recordsVec.push_back(recToVec(line));
         cur_lineno++;
@@ -228,12 +235,12 @@ void phaseOneSort() {
     total_lines = filesize/lineSize;
     lines_fit = (long int) maxMemSize/lineSize;
     datafile.close();
-    lines_per_thread = lines_fit/num_threads;
+    lines_per_thread = ceil((double)lines_fit/num_threads);
     cout << "lines_per_thread" << lines_per_thread << endl;
     long int lines_read=0, block_num=0;
     while(lines_read < total_lines) {
-        for (int t=0; t<num_threads && lines_read<total_lines; t++) {
-            int start_line = lines_read;
+        int long block_lines = lines_fit*(block_num+1);
+        for (long int t=0,start_line = lines_read; t<num_threads && lines_read<total_lines && start_line<block_lines; t++,start_line=lines_read) {
             pair<long int, long int> clbp = make_pair(start_line,block_num);
             cout << "Creating thread #" << t << endl;
             if (pthread_create(&TIDarr[t], NULL, readInputFile, &clbp) != 0) {
@@ -241,20 +248,22 @@ void phaseOneSort() {
             }
             cout << "joining" << t << endl;
             pthread_join(TIDarr[t],NULL);
-            lines_read = min(lines_read+lines_per_thread,lines_fit);
+            lines_read = min(lines_read+lines_per_thread,lines_read+lines_fit);
             cout << "lines_read" << lines_read << endl;
             cout << recordsVec.size() << endl;
-            int x;
-            cin >> x;
+//            int x;
+//            cin >> x;
         }
-        cout << "Sorting sublist #" << block_num << endl;
-        if(order == "asc")
-            sort(recordsVec.begin(),recordsVec.end(),ascSort);
-        else
-            sort(recordsVec.begin(),recordsVec.end(),descSort);
-        writeTempFile(block_num);
-        recordsVec.clear();
-        block_num++;
+        if(!recordsVec.empty()) {
+            cout << "Sorting sublist #" << block_num << endl;
+            if (order == "asc")
+                sort(recordsVec.begin(), recordsVec.end(), ascSort);
+            else
+                sort(recordsVec.begin(), recordsVec.end(), descSort);
+            writeTempFile(block_num);
+            recordsVec.clear();
+            block_num++;
+        }
     }
     cout << "Records sorted : " << lines_read << endl;
 }
@@ -343,7 +352,7 @@ vector<vector<string>> readDataBlock(int filenum, int block_size) {
         }
         else {
 //                completed_arr[filenum] = true;
-            cout << "error reading" << endl;
+            cout << "error reading " << filenum << endl;
             break;
         }
 //            cout << "read " << filenum << endl;
@@ -358,6 +367,10 @@ void phaseTwoSort() {
     cout << "no of files " << sublist_num << endl;
     int block_size = (int)maxMemSize/(sublist_num*recSize);
     cout << "block size " << block_size << endl;
+    if(block_size<=0) {
+        cout << "Cannot sort as memory size is too small" << endl;
+        exit(0);
+    }
     string line;
     bool is_completed[sublist_num];
     completed_arr = is_completed;
@@ -376,9 +389,9 @@ void phaseTwoSort() {
         int last_col_idx = recordsVec[0].size()-1;
         vector<string> top_record = PQ.top();
         int top_block_num = stoi(top_record[last_col_idx]);
-        cout << "TOP " << top_block_num << " " << top_record[2] << endl;
+//        cout << "TOP " << top_block_num << " " << top_record[2] << endl;
         block_access_arr[top_block_num]++;
-        cout << top_block_num << "access" << block_access_arr[top_block_num] << endl;
+//        cout << top_block_num << "access" << block_access_arr[top_block_num] << endl;
         if(PQ.size()==1) {
             *outFile << vecToStr(top_record, true) << "\n";
         }
