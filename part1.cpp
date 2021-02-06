@@ -1,41 +1,79 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <sys/stat.h>
 #include <vector>
-#include <cstdio>
 #include <algorithm>
 #include <bits/stdc++.h>
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 
 vector<int> COL_ORDER;
 
-template <typename T>
+bool ascSort(vector<string> const &r1, vector<string> const &r2) {
+    for(int i=0;i<COL_ORDER.size();i++) {
+        int c = COL_ORDER[i];
+        if(r1[c] == r2[c])
+            continue;
+        return (r1[c].compare(r2[c]))<0;
+    }
+}
+
 class AscRecCompare {
 public:
-    int operator()(T const &r1, T const &r2) {
+    bool operator()(vector<string> const &r1, vector<string> const &r2) {
         for(int i=0;i<COL_ORDER.size();i++) {
-            if(r1[i] == r2[i])
+            int c = COL_ORDER[i];
+            if(r1[c] == r2[c])
                 continue;
-            return (r1[i].compare(r2[i]));
+            return (r2[c].compare(r1[c]));
         }
     }
 };
 
-template <typename T>
+bool descSort(vector<string> const &r1, vector<string> const &r2) {
+    for(int i=0;i<COL_ORDER.size();i++) {
+        int c = COL_ORDER[i];
+        if(r1[c] == r2[c])
+            continue;
+        return (r1[c].compare(r2[c]))>0;
+    }
+}
+
 class DescRecCompare {
 public:
-    int operator()(T const &r1, T const &r2) {
+    bool operator()(vector<string> const &r1, vector<string> const &r2) {
         for(int i=0;i<COL_ORDER.size();i++) {
-            if(r1[i] == r2[i])
+            int c = COL_ORDER[i];
+            if(r1[c] == r2[c])
                 continue;
-            return (-1*r1[i].compare(r2[i]));
+            return (r1[c].compare(r2[c]))>0;
         }
     }
+};
+
+template <typename C>
+map<string,priority_queue<vector<string>,vector<vector<string>>,C>> mapPQ;
+
+struct CompareRecord {
+    string order;
+    CompareRecord(string order): order(order) {}
+    bool operator() (vector<string> const &r1, vector<string> const &r2) const {
+        if(order=="asc")
+            return descSort(r1,r2);
+        return ascSort(r1,r2);
+    }
+};
+
+template <typename T>
+class myPQ {
+    public:
+        priority_queue<vector<string>,vector<vector<string>>,T> PQ;
 };
 
 class TwoPhaseMergeSort {
+private:
+    vector<ifstream*> openTempFilesVec;
 public:
     vector<int> sortColIndexVec;
     string inputFile;
@@ -44,17 +82,19 @@ public:
     string order;
     vector<string> sortColsVec;
     vector<pair<string,int>> metaVec;
-    vector<ifstream*> openTempFilesVec;
     vector<vector<string>> recordsVec;
     vector<string> tmpFilenamesVec;
-    priority_queue<vector<string>,vector<vector<string>>,DescRecCompare<vector<string>>> PQ;
+    bool *completed_arr;
+    vector<int> num_recs_per_file_vec;
+    int lineSize;
+//    priority_queue<vector<string>,vector<vector<string>>,T> PQ<T>;
 
     TwoPhaseMergeSort(string inFile, string outFile, int mem_size, string ord, vector<string> &sort_cols_vec) {
         inputFile = inFile;
         outputFile = outFile;
-//        maxMemSize = (long int) mem_size*1000000*0.8;
-        maxMemSize = (long int) mem_size*0.8;
-        cout << "Memory size taken : " << maxMemSize << endl;
+        maxMemSize = (long int) mem_size*1000000;
+//        maxMemSize = (long int) mem_size*0.8;
+        cout << "Memory size taken (in bytes) : " << maxMemSize << endl;
         sortColsVec = sort_cols_vec;
         order = "";
         for(int i=0;i<ord.length();i++)
@@ -63,6 +103,8 @@ public:
             cout << "Invalid order" << endl;
             exit(0);
         }
+        priority_queue<vector<string>,vector<vector<string>>,DescRecCompare> PQasc;
+        mapPQ<DescRecCompare>[order] = PQasc;
         getMetadata();
     }
 
@@ -82,7 +124,7 @@ public:
             recSize += colsize;
         }
         metafile.close();
-        cout << "Record size (without delimiter) : " << recSize << endl;
+        cout << "Record size in bytes (without delimiter) : " << recSize << endl;
         for(auto it=sortColsVec.begin();it!=sortColsVec.end();it++) {
             bool flag = false;
             for(int j=0;j<metaVec.size();j++) {
@@ -99,11 +141,16 @@ public:
             }
         }
         COL_ORDER = sortColIndexVec;
+//        cout << "colorder";
+//        for(int a=0;a<COL_ORDER.size();a++)
+//            cout << COL_ORDER[a] << " ";
+//        cout << endl;
     }
 
     void sortFile() {
         cout << "Running Phase 1" << endl;
         phaseOneSort();
+//        exit(0);
         if(!tmpFilenamesVec.empty()) {
             cout << "Running Phase 2" << endl;
             phaseTwoSort();
@@ -114,24 +161,26 @@ public:
         struct stat filestatus;
         stat(inputFile.c_str(), &filestatus);
         long int filesize = filestatus.st_size;
-        cout << "Filesize : " << filesize << endl;
+//        cout << "Filesize : " << filesize << endl;
         long int recs_toread = (long int) maxMemSize/recSize;
-        cout << "Number of sub-files (splits) : " << (long int)filesize/(recs_toread*recSize) << endl;
+//        cout << "Number of sub-files (splits) : " << (long int)filesize/(recs_toread*recSize) << endl;
         cout << "Records to read per sub-file : " << recs_toread << endl;
         ifstream datafile(inputFile);
         string line;
         long int cur_line_count=0, all_recs_count=0;
-        int sublist_num=1;
+        int sublist_num=0;
         while(cur_line_count < recs_toread && getline(datafile, line)) {
+            lineSize = line.length();
             recordsVec.push_back(recToVec(line));
             cur_line_count++;
             if(cur_line_count == recs_toread) {
                 cout << "Sorting sublist #" << sublist_num << endl;
                 if(order == "asc")
-                    sort(recordsVec.begin(),recordsVec.end(),AscRecCompare<vector<string>>());
+                    sort(recordsVec.begin(),recordsVec.end(),ascSort);
                 else
-                    sort(recordsVec.begin(),recordsVec.end(),DescRecCompare<vector<string>>());
+                    sort(recordsVec.begin(),recordsVec.end(),descSort);
                 writeTempFile(sublist_num);
+//                exit(0);
                 cur_line_count = 0;
                 sublist_num++;
                 recordsVec.clear();
@@ -141,16 +190,15 @@ public:
         if(recordsVec.size()>0) {
             cout << "Sorting sublist #" << sublist_num << endl;
             if(order == "asc")
-                sort(recordsVec.begin(),recordsVec.end(),AscRecCompare<vector<string>>());
+                sort(recordsVec.begin(),recordsVec.end(),ascSort);
             else
-                sort(recordsVec.begin(),recordsVec.end(),DescRecCompare<vector<string>>());
+                sort(recordsVec.begin(),recordsVec.end(),descSort);
             writeTempFile(sublist_num);
             cur_line_count = 0;
             sublist_num++;
             recordsVec.clear();
-//            all_recs_count++;
         }
-        cout << "Records sorted : " << all_recs_count << endl;
+//        cout << "Records sorted : " << all_recs_count << endl;
     }
 
     void writeTempFile(int sublist_num) {
@@ -161,57 +209,91 @@ public:
         if(!tmpfile.is_open()) {
             cout << "not open " << tmp_filename << endl;
         }
-        cout << "is open " << tmp_filename << " " << recordsVec.size() << endl;
+//        cout << "is open " << tmp_filename << " " << recordsVec.size() << endl;
         for(int i=0; i<recordsVec.size(); i++) {
             string recline = vecToStr(recordsVec[i], false);
-            cout << recline << endl;
-            try {
+//            cout << recline << endl;
                 if (i == recordsVec.size() - 1)
                     tmpfile << recline;
                 else
                     tmpfile << recline << "\n";
-            }
-            catch(exception) {
-                cout << "*************************exptn" << endl;
-            }
-            tmpfile << "manu";
         }
         tmpfile.close();
-//        delete tmpfile;
         tmpFilenamesVec.push_back(tmp_filename);
+        num_recs_per_file_vec.push_back(recordsVec.size());
     }
 
     void phaseTwoSort() {
         openTempFiles();
         ofstream *outFile = new ofstream(outputFile.c_str(), ios::out | ios::app);
         int sublist_num = tmpFilenamesVec.size();
+        cout << "No of sub-files : " << sublist_num << endl;
         int block_size = (int)maxMemSize/(sublist_num*recSize);
+        cout << "Block size (no of records) : " << block_size << endl;
         string line;
-        bool completed_arr[sublist_num];
+        bool is_completed[sublist_num];
+        completed_arr = is_completed;
         int block_access_arr[sublist_num];
+        CompareRecord cmp(order);
+        priority_queue<vector<string>,vector<vector<string>>,CompareRecord> PQ(order);
+//        priority_queue<vector<string>,vector<vector<string>>,DescRecCompare> PQ = mapPQ[order];
         for(int i=0;i<sublist_num;i++) {
             block_access_arr[i] = 0;
-            completed_arr[i] = readDataBlock(i,block_size);
+            for(vector<string> const rvec : readDataBlock(i,block_size))
+                PQ.push(rvec);
+//            cout << "hi" << endl;
         }
         cout << "Sorting ..." << endl;
         while(PQ.empty() == false) {
             int last_col_idx = recordsVec[0].size()-1;
             vector<string> top_record = PQ.top();
             int top_block_num = stoi(top_record[last_col_idx]);
+//            cout << "TOP " << top_block_num << " " << top_record[2] << endl;
             block_access_arr[top_block_num]++;
+//            cout << top_block_num << "access" << block_access_arr[top_block_num] << endl;
             if(PQ.size()==1) {
-                *outFile << vecToStr(top_record, true);
+                *outFile << vecToStr(top_record, true) << "\n";
             }
             else {
                 *outFile << vecToStr(top_record, true) << "\n";
             }
+//            cout << "before pop " << PQ.size();
             PQ.pop();
+//            cout << " after pop " << PQ.size() << endl;
             if(block_access_arr[top_block_num] >= block_size && !completed_arr[top_block_num]) {
-                completed_arr[top_block_num] = readDataBlock(top_block_num,block_size);
+//                PQ.push(readDataBlock(top_block_num,block_size));
+                for(vector<string> const rvec : readDataBlock(top_block_num,block_size))
+                    PQ.push(rvec);
+                block_access_arr[top_block_num] = 0;
+//                cout << "here" << PQ.size() << endl;
             }
         }
-        closeTempFiles();
         outFile->close();
+    }
+
+    vector<vector<string>> readDataBlock(int filenum, int block_size) {
+        string line, word;
+        vector<vector<string>> block_recs;
+        for(int b=0;b<block_size;b++) {
+//            cout << "before getline " << filenum << endl;
+            if(openTempFilesVec[filenum]->peek() && getline(*openTempFilesVec[filenum],line)) {
+                vector<string> record = recToVec(line);
+                record.push_back(to_string(filenum));
+                recordsVec.push_back(record);
+                block_recs.push_back(record);
+                num_recs_per_file_vec[filenum]--;
+                if(num_recs_per_file_vec[filenum]<=0) {
+                    completed_arr[filenum] = true;
+                    break;
+                }
+            }
+            else {
+                cout << "error reading red" << endl;
+                break;
+            }
+//            cout << "read " << filenum << endl;
+        }
+        return block_recs;
     }
 
     vector<string> recToVec(string line) {
@@ -236,30 +318,10 @@ public:
         return line;
     }
 
-    bool readDataBlock(int filenum, int block_size) {
-        string line;
-        bool is_completed = false;
-        for(int b=0;b<block_size;b++) {
-            if(*openTempFilesVec[filenum] >> line) {
-                vector<string> record = recToVec(line);
-                record.push_back(to_string(filenum));
-                recordsVec.push_back(record);
-                if(b==0)
-                    PQ.push(record);
-            }
-            else {
-                is_completed = true;
-                break;
-            }
-        }
-        return is_completed;
-    }
-
     void openTempFiles() {
         for (int i=0;i<tmpFilenamesVec.size();i++) {
-            ifstream *file;
-            file = new ifstream(tmpFilenamesVec[i].c_str(), ios::in);
-            openTempFilesVec.push_back(file);
+            openTempFilesVec.push_back(new ifstream(tmpFilenamesVec[i].c_str(), ios::in));
+
         }
     }
 
@@ -267,7 +329,6 @@ public:
         for (int i=0;i<openTempFilesVec.size();i++) {
             openTempFilesVec[i]->close();
             remove(tmpFilenamesVec[i].c_str());
-            delete openTempFilesVec[i];
         }
     }
 
@@ -275,7 +336,7 @@ public:
 
 int main(int argc, char ** argv) {
     if(argc<5) {
-        cout << "Usage : main.cpp <input_file> <output_file> <memory_size> <asc/desc> <columns...>" << endl;
+        cout << "Usage : part1.cpp <input_file> <output_file> <memory_size> <asc/desc> <columns...>" << endl;
         return 0;
     }
     vector<string> sort_cols_vec;
@@ -286,6 +347,11 @@ int main(int argc, char ** argv) {
 //    cout << endl;
     TwoPhaseMergeSort *tpms = new TwoPhaseMergeSort(argv[1],argv[2],stoi(argv[3]),argv[4],sort_cols_vec);
     cout << "Started Execution" << endl;
+    auto ex_start = high_resolution_clock::now();
     tpms->sortFile();
+    auto ex_stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(ex_stop - ex_start);
+    cout << "Time taken for sorting : " << ((double)duration.count()/1000) << " seconds" << endl;
+    tpms->closeTempFiles();
     return 0;
 }

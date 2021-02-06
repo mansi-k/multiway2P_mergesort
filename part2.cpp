@@ -364,7 +364,7 @@ void sortFile() {
 
 int main(int argc, char ** argv) {
     if(argc<6) {
-        cout << "Usage : main.cpp <input_file> <output_file> <memory_size> <num_threads> <asc/desc> <columns...>" << endl;
+        cout << "Usage : part2.cpp <input_file> <output_file> <memory_size> <num_threads> <asc/desc> <columns...>" << endl;
         return 0;
     }
     vector<string> sort_cols_vec;
